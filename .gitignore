@@ -1,0 +1,2 @@
+# Ignore service account keys and other secrets
+backend-gowtham/serviceAccountKey.json
