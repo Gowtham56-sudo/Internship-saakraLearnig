@@ -3,25 +3,19 @@ const router = express.Router();
 
 const verifyToken = require("../middlewares/authmiddleware");
 const checkRole = require("../middlewares/rolemiddleware");
+const {
+  addCourse,
+  enrollCourse,
+  getCourses,
+} = require("../controllers/courseController");
 
-// Trainer mattum course add panna mudiyum
-router.post(
-  "/add",
-  verifyToken,
-  checkRole("trainer"),
-  (req, res) => {
-    res.json({ message: "Course added successfully" });
-  }
-);
+// Trainer – add course
+router.post("/add", verifyToken, checkRole("trainer"), addCourse);
 
-// Student view
-router.get(
-  "/view",
-  verifyToken,
-  checkRole("student"),
-  (req, res) => {
-    res.json({ message: "Student course list" });
-  }
-);
+// Student – enroll
+router.post("/enroll", verifyToken, checkRole("student"), enrollCourse);
+
+// All users – view courses
+router.get("/", verifyToken, getCourses);
 
 module.exports = router;
