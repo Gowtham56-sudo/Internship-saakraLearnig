@@ -1,0 +1,112 @@
+* {
+    box-sizing: border-box;
+    font-family: "Segoe UI", Tahoma, sans-serif;
+}
+
+body {
+    margin: 0;
+    background: linear-gradient(120deg, #e0e7ff, #f8fafc);
+}
+
+/* Login / Register Card */
+.container {
+    width: 360px;
+    margin: 90px auto;
+    background: white;
+    padding: 28px;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+}
+
+h2 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+input {
+    width: 100%;
+    padding: 11px;
+    margin-bottom: 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+}
+
+button {
+    width: 100%;
+    padding: 11px;
+    background: #6366f1;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #4f46e5;
+}
+
+.link {
+    text-align: center;
+    margin-top: 10px;
+}
+
+/* Navbar */
+.navbar {
+    background: #6366f1;
+    color: white;
+    padding: 14px 20px;
+    display: flex;
+    justify-content: space-between;
+}
+
+/* Dashboard */
+.dashboard {
+    padding: 25px;
+}
+
+.card {
+    background: white;
+    padding: 16px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
+}
+
+.attendance p {
+    font-size: 18px;
+    color: #16a34a;
+}
+
+.subject-section {
+    margin-bottom: 25px;
+}
+
+.subject-section ul {
+    list-style: none;
+    padding: 0;
+}
+
+.subject-section li {
+    background: white;
+    margin-bottom: 10px;
+    padding: 14px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+/* Marks Table */
+.marks-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.marks-table th {
+    background: #6366f1;
+    color: white;
+    padding: 10px;
+}
+
+.marks-table td {
+    padding: 10px;
+    background: #f1f5f9;
+}

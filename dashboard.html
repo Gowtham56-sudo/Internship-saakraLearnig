@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Student Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+    <h3>Student Dashboard</h3>
+    <button onclick="logout()">Logout</button>
+</nav>
+
+<div class="dashboard">
+    <h2 id="welcomeText">Welcome</h2>
+
+    <div class="card attendance">
+        <h3>Attendance</h3>
+        <p><strong>85%</strong> (Good)</p>
+    </div>
+
+    <div class="subject-section">
+        <h3>Core Subjects</h3>
+        <ul id="coreSubjects"></ul>
+    </div>
+
+    <div class="subject-section">
+        <h3>Skill Subjects</h3>
+        <ul id="skillSubjects"></ul>
+    </div>
+
+    <div class="subject-section">
+        <h3>Recent Marks</h3>
+        <table class="marks-table">
+            <tr>
+                <th>Subject</th>
+                <th>Marks</th>
+            </tr>
+            <tr><td>Tamil</td><td>82</td></tr>
+            <tr><td>English</td><td>76</td></tr>
+            <tr><td>Mathematics</td><td>88</td></tr>
+            <tr><td>Science</td><td>81</td></tr>
+        </table>
+    </div>
+</div>
+
+<script src="js/dashboard.js"></script>
+</body>
+</html>
