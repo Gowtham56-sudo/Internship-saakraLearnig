@@ -6,6 +6,15 @@
 body {
     margin: 0;
     background: linear-gradient(120deg, #e0e7ff, #f8fafc);
+    min-height: 100vh;
+    transition: background 1s ease;
+    animation: fadeInBody 1s;
+}
+
+@keyframes fadeInBody {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
 }
 
 /* Login / Register Card */
@@ -39,10 +48,20 @@ button {
     border: none;
     border-radius: 6px;
     cursor: pointer;
+    transition: background 0.3s, transform 0.2s;
+    animation: fadeInButton 1.2s;
+}
+
+@keyframes fadeInButton {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
 }
 
 button:hover {
     background: #4f46e5;
+    transform: scale(1.05);
+}
 }
 
 .link {
@@ -57,11 +76,25 @@ button:hover {
     padding: 14px 20px;
     display: flex;
     justify-content: space-between;
+    animation: slideDownNav 0.8s;
+}
+
+@keyframes slideDownNav {
+    from { transform: translateY(-60px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
 }
 
 /* Dashboard */
 .dashboard {
     padding: 25px;
+    animation: fadeInDashboard 1.2s;
+}
+
+@keyframes fadeInDashboard {
+    from { opacity: 0; transform: scale(0.98); }
+    to { opacity: 1; transform: scale(1); }
+}
 }
 
 .card {
@@ -70,15 +103,45 @@ button:hover {
     border-radius: 8px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     margin-bottom: 20px;
+    transition: box-shadow 0.3s, transform 0.3s;
+    animation: bounceInCard 1s;
+}
+
+@keyframes bounceInCard {
+    0% { transform: scale(0.8); opacity: 0; }
+    60% { transform: scale(1.05); opacity: 1; }
+    100% { transform: scale(1); }
+}
+    box-shadow: 0 8px 32px rgba(99,102,241,0.15);
+    transform: translateY(-4px) scale(1.03);
+}
 }
 
 .attendance p {
     font-size: 18px;
     color: #16a34a;
+    animation: fadeInAttendance 1.3s;
+}
+
+@keyframes fadeInAttendance {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 }
 
 .subject-section {
     margin-bottom: 25px;
+    animation: fadeInSubject 1.5s;
+    transition: box-shadow 0.3s, transform 0.3s;
+}
+
+@keyframes fadeInSubject {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+    box-shadow: 0 4px 16px rgba(99,102,241,0.10);
+    transform: scale(1.02);
+}
 }
 
 .subject-section ul {
@@ -98,6 +161,14 @@ button:hover {
 .marks-table {
     width: 100%;
     border-collapse: collapse;
+    animation: fadeInMarks 1.8s;
+    transition: box-shadow 0.3s, transform 0.3s;
+}
+
+@keyframes fadeInMarks {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 }
 
 .marks-table th {
