@@ -5,6 +5,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Courses from './pages/Courses';
+import Admin from './pages/Admin';
+import AddCourse from './pages/AddCourse';
 import Sidebar from './components/Sidebar';
 import Navbar from './components/Navbar';
 import { User } from './types';
@@ -37,7 +39,7 @@ const App: React.FC = () => {
   return (
     <HashRouter>
       <div className="min-h-screen flex bg-slate-50">
-        {isAuthenticated && <Sidebar onLogout={handleLogout} />}
+        {isAuthenticated && <Sidebar onLogout={handleLogout} user={user} />}
         
         <div className={`flex-1 flex flex-col ${isAuthenticated ? 'md:ml-64' : ''}`}>
           {isAuthenticated && <Navbar user={user} />}
@@ -59,6 +61,14 @@ const App: React.FC = () => {
               <Route 
                 path="/courses" 
                 element={isAuthenticated ? <Courses /> : <Navigate to="/login" />} 
+              />
+              <Route
+                path="/courses/add"
+                element={isAuthenticated && user?.role === 'trainer' ? <AddCourse /> : <Navigate to="/" />}
+              />
+              <Route
+                path="/admin"
+                element={isAuthenticated && user?.role === 'admin' ? <Admin /> : <Navigate to="/" />}
               />
               {/* Assignments and Schedule pages removed */}
               <Route path="*" element={<Navigate to="/" />} />

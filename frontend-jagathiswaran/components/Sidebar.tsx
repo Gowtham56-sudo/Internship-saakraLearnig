@@ -4,12 +4,13 @@ import { Link, useLocation } from 'react-router-dom';
 
 interface SidebarProps {
   onLogout: () => void;
+  user?: { role?: string } | null;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ onLogout }) => {
+const Sidebar: React.FC<SidebarProps> = ({ onLogout, user }) => {
   const location = useLocation();
 
-  const menuItems = [
+  const menuItems: Array<{ name: string; path: string; icon: React.ReactNode }> = [
     { name: 'Dashboard', path: '/', icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
     )},
@@ -18,6 +19,19 @@ const Sidebar: React.FC<SidebarProps> = ({ onLogout }) => {
     )},
     // Assignments and Schedule removed
   ];
+
+  // Add trainer/admin specific entries
+  if (user?.role === 'trainer') {
+    menuItems.push({ name: 'Add Course', path: '/courses/add', icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
+    )});
+  }
+
+  if (user?.role === 'admin') {
+    menuItems.push({ name: 'Admin', path: '/admin', icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3" /></svg>
+    )});
+  }
 
   return (
     <aside className="hidden md:flex flex-col w-64 bg-white border-r border-slate-200 fixed inset-y-0 left-0 z-50">
