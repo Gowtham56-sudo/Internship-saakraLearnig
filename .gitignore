@@ -1,2 +1,3 @@
 # Ignore service account keys and other secrets
 backend-gowtham/serviceAccountKey.json
+node_modules
