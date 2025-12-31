@@ -7,6 +7,7 @@ const {
   addCourse,
   enrollCourse,
   getCourses,
+  getCourseStudents,
 } = require("../controllers/courseController");
 
 // Trainer – add course
@@ -17,5 +18,8 @@ router.post("/enroll", verifyToken, checkRole("student"), enrollCourse);
 
 // All users – view courses
 router.get("/", verifyToken, getCourses);
+
+// Trainer/Admin – get students for a course
+router.get("/:courseId/students", verifyToken, checkRole(["admin", "trainer"]), getCourseStudents);
 
 module.exports = router;

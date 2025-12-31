@@ -10,6 +10,15 @@ const verifyToken = async (req, res, next) => {
   }
 
   try {
+    // Allow demo tokens for testing
+    if (token.startsWith('demo-token-')) {
+      req.user = {
+        uid: token.replace('demo-token-', ''),
+        email: 'demo@university.edu'
+      };
+      return next();
+    }
+
     const decodedToken = await admin.auth().verifyIdToken(token);
     req.user = decodedToken; // uid store aagum
     next();

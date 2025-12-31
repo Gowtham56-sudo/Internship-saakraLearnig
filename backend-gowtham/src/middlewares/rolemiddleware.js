@@ -1,7 +1,7 @@
 const { db } = require("../config/firebase");
 
-// Role check middleware
-const checkRole = (requiredRole) => {
+// Role check middleware - accepts a single role string or an array of allowed roles
+const checkRole = (requiredRoleOrRoles) => {
   return async (req, res, next) => {
     try {
       const userDoc = await db
@@ -11,10 +11,14 @@ const checkRole = (requiredRole) => {
 
       const userRole = userDoc.data().role;
 
-      if (userRole !== requiredRole) {
-        return res.status(403).json({
-          message: "Access denied – role mismatch",
-        });
+      if (Array.isArray(requiredRoleOrRoles)) {
+        if (!requiredRoleOrRoles.includes(userRole)) {
+          return res.status(403).json({ message: "Access denied – role mismatch" });
+        }
+      } else {
+        if (userRole !== requiredRoleOrRoles) {
+          return res.status(403).json({ message: "Access denied – role mismatch" });
+        }
       }
 
       next();

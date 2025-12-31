@@ -12,9 +12,17 @@ dist
 dist-ssr
 *.local
 
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
+!.vscode/settings.json
 .idea
 .DS_Store
 *.suo
@@ -22,3 +30,15 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Production
+build
+coverage
+
+# OS
+Thumbs.db
+
+# Misc
+.cache
+.temp
+.tmp

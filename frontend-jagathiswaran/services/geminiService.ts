@@ -3,7 +3,9 @@ import { GoogleGenAI } from "@google/genai";
 
 export async function getStudyAdvice(prompt: string) {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+    // Ensuring strict adherence to the required initialization pattern
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+    
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: prompt,
@@ -16,6 +18,6 @@ export async function getStudyAdvice(prompt: string) {
     return response.text;
   } catch (error) {
     console.error("Gemini API Error:", error);
-    return "I'm having trouble connecting to my academic records right now. Please try again later!";
+    return "I'm having trouble connecting to my academic records right now. Please ensure your API key is correctly configured and try again later!";
   }
 }

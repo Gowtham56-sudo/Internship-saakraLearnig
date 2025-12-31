@@ -3,8 +3,10 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'student' | 'admin';
+  role: 'student' | 'trainer' | 'admin';
   avatar?: string;
+  status?: 'active' | 'suspended' | 'pending';
+  lastLogin?: string;
 }
 
 export interface Course {
@@ -30,4 +32,31 @@ export interface DashboardStats {
   completedCourses: number;
   totalHours: number;
   attendance: number;
+}
+
+export interface Question {
+  id: string;
+  text: string;
+  options: string[];
+  correctAnswer: number;
+}
+
+export interface Assessment {
+  id: string;
+  title: string;
+  courseId: string;
+  duration: number; // minutes
+  questions: Question[];
+  status: 'pending' | 'completed';
+  score?: number;
+}
+
+export interface Project {
+  id: string;
+  title: string;
+  courseId: string;
+  deadline: string;
+  status: 'todo' | 'submitted' | 'graded';
+  description: string;
+  grade?: string;
 }

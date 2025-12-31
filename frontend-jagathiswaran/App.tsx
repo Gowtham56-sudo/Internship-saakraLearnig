@@ -5,8 +5,12 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Courses from './pages/Courses';
-import Admin from './pages/Admin';
-import AddCourse from './pages/AddCourse';
+import Assessments from './pages/Assessments';
+import Projects from './pages/Projects';
+import Analytics from './pages/Analytics';
+import AccessManagement from './pages/AccessManagement';
+import GradingHub from './pages/GradingHub';
+import SystemLogs from './pages/SystemLogs';
 import Sidebar from './components/Sidebar';
 import Navbar from './components/Navbar';
 import { User } from './types';
@@ -39,7 +43,7 @@ const App: React.FC = () => {
   return (
     <HashRouter>
       <div className="min-h-screen flex bg-slate-50">
-        {isAuthenticated && <Sidebar onLogout={handleLogout} user={user} />}
+        {isAuthenticated && <Sidebar user={user} onLogout={handleLogout} />}
         
         <div className={`flex-1 flex flex-col ${isAuthenticated ? 'md:ml-64' : ''}`}>
           {isAuthenticated && <Navbar user={user} />}
@@ -62,15 +66,35 @@ const App: React.FC = () => {
                 path="/courses" 
                 element={isAuthenticated ? <Courses /> : <Navigate to="/login" />} 
               />
-              <Route
-                path="/courses/add"
-                element={isAuthenticated && user?.role === 'trainer' ? <AddCourse /> : <Navigate to="/" />}
+              <Route 
+                path="/assessments" 
+                element={isAuthenticated ? <Assessments /> : <Navigate to="/login" />} 
               />
-              <Route
-                path="/admin"
-                element={isAuthenticated && user?.role === 'admin' ? <Admin /> : <Navigate to="/" />}
+              <Route 
+                path="/projects" 
+                element={isAuthenticated ? <Projects /> : <Navigate to="/login" />} 
               />
-              {/* Assignments and Schedule pages removed */}
+              <Route 
+                path="/analytics" 
+                element={isAuthenticated ? <Analytics /> : <Navigate to="/login" />} 
+              />
+              
+              {/* Trainer Only Route */}
+              <Route 
+                path="/grading" 
+                element={isAuthenticated && user?.role === 'trainer' ? <GradingHub /> : <Navigate to="/" />} 
+              />
+
+              {/* Admin Only Routes */}
+              <Route 
+                path="/users" 
+                element={isAuthenticated && user?.role === 'admin' ? <AccessManagement /> : <Navigate to="/" />} 
+              />
+              <Route 
+                path="/logs" 
+                element={isAuthenticated && user?.role === 'admin' ? <SystemLogs /> : <Navigate to="/" />} 
+              />
+              
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>
           </main>
