@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+console.log("Analytics route loaded");
 const verifyToken = require("../middlewares/authmiddleware");
 const roleMiddleware = require("../middlewares/rolemiddleware");
 const analyticsService = require("../services/analyticsService");
@@ -109,6 +110,23 @@ router.get(
       const analytics = await analyticsService.getAdminAnalytics();
       res.json(analytics);
     } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
+
+// Get recent platform activities (admin)
+router.get(
+  "/recent",
+  verifyToken,
+  roleMiddleware(["admin"]),
+  async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit) || 10;
+      const data = await analyticsService.getRecentPlatformActivity(limit);
+      res.json({ data });
+    } catch (error) {
+      console.error('/api/analytics/recent error', { query: req.query, message: error.message, stack: error.stack });
       res.status(500).json({ error: error.message });
     }
   }

@@ -50,7 +50,7 @@ exports.getOptimizedUserProgress = async (userId) => {
     const snapshot = await db
       .collection("progress")
       .where("userId", "==", userId)
-      .select([
+      .select(...[
         "courseId",
         "completedPercentage",
         "lastUpdatedAt",
@@ -96,7 +96,7 @@ exports.getOptimizedCourseAnalytics = async (courseId) => {
     const snapshot = await db
       .collection("progress")
       .where("courseId", "==", courseId)
-      .select(["completedPercentage"])
+      .select(...["completedPercentage"])
       .get();
 
     const progresses = snapshot.docs.map((doc) => doc.data().completedPercentage);
@@ -133,7 +133,7 @@ exports.getOptimizedRecentAssessments = async (
   try {
     let query = db
       .collection("assessment_submissions")
-      .select([
+      .select(...[
         "userId",
         "courseId",
         "assessmentId",
@@ -183,7 +183,7 @@ exports.getOptimizedCertificates = async (
     let query = db
       .collection("certificates")
       .where("status", "==", status)
-      .select(["userId", "courseId", "issuedDate", "finalScore"]);
+      .select(...["userId", "courseId", "issuedDate", "finalScore"]);
 
     if (courseId) {
       query = query.where("courseId", "==", courseId);
@@ -220,17 +220,17 @@ exports.getOptimizedBatchUserData = async (userIds) => {
           db
             .collection("progress")
             .where("userId", "in", batch)
-            .select(["userId", "courseId", "completedPercentage"])
+            .select(...["userId", "courseId", "completedPercentage"])
             .get(),
           db
             .collection("certificates")
             .where("userId", "in", batch)
-            .select(["userId", "courseId", "status"])
+            .select(...["userId", "courseId", "status"])
             .get(),
           db
             .collection("assessment_submissions")
             .where("userId", "in", batch)
-            .select(["userId", "percentage", "passed"])
+            .select(...["userId", "percentage", "passed"])
             .get(),
         ]);
 

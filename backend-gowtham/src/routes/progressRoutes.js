@@ -7,6 +7,8 @@ const {
   updateProgress,
   getProgress,
   getCourseProgressAnalytics,
+  getCurrentCourseProgress,
+  getUserCourseProgress,
 } = require("../controllers/progressController");
 
 // Student update progress
@@ -37,35 +39,14 @@ router.get("/user", verifyToken, async (req, res) => {
   }
 });
 
+// Get current user's course progress (must be before dynamic :uid route)
+router.get("/current/:courseId", verifyToken, getCurrentCourseProgress);
+
+// Get progress for user and course (must be before dynamic :uid route)
+router.get("/:userId/:courseId", verifyToken, getUserCourseProgress);
+
 // Get user progress (by userId)
 router.get("/:uid", verifyToken, getProgress);
-
-// Get progress for user and course
-router.get("/:userId/:courseId", verifyToken, async (req, res) => {
-  try {
-    res.json({
-      userId: req.params.userId,
-      courseId: req.params.courseId,
-      progress: {},
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Get current user's course progress
-router.get("/current/:courseId", verifyToken, async (req, res) => {
-  try {
-    const userId = req.user?.uid;
-    res.json({
-      userId,
-      courseId: req.params.courseId,
-      progress: {},
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
 
 // Record learning activity
 router.post("/record-activity/:courseId", verifyToken, async (req, res) => {

@@ -309,6 +309,42 @@ exports.getAdminAnalytics = async () => {
   }
 };
 
+// Get recent platform-wide activities for admin dashboard
+exports.getRecentPlatformActivity = async (limit = 10) => {
+  try {
+    // Recent engagement events
+    const eventsSnap = await db
+      .collection('engagement_events')
+      .orderBy('timestamp', 'desc')
+      .limit(limit)
+      .get();
+
+    const events = eventsSnap.docs.map((d) => ({ id: d.id, type: 'engagement', ...d.data() }));
+
+    // Recent certificates
+    const certSnap = await db.collection('certificates').orderBy('issuedDate', 'desc').limit(limit).get();
+    const certs = certSnap.docs.map((d) => ({ id: d.id, type: 'certificate', ...d.data() }));
+
+    // Recent enrollments
+    const enrollSnap = await db.collection('enrollments').orderBy('enrolledAt', 'desc').limit(limit).get();
+    const enrolls = enrollSnap.docs.map((d) => ({ id: d.id, type: 'enrollment', ...d.data() }));
+
+    // Merge and sort by timestamp/date field
+    const merged = [...events, ...certs, ...enrolls];
+    merged.sort((a, b) => {
+      const ta = a.timestamp || a.issuedDate || a.enrolledAt || null;
+      const tb = b.timestamp || b.issuedDate || b.enrolledAt || null;
+      const na = ta ? new Date(ta).getTime() : 0;
+      const nb = tb ? new Date(tb).getTime() : 0;
+      return nb - na;
+    });
+
+    return merged.slice(0, limit);
+  } catch (error) {
+    throw error;
+  }
+};
+
 // Get course completion trends
 exports.getCompletionTrends = async (courseId, days = 30) => {
   try {

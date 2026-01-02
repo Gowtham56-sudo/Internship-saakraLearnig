@@ -63,6 +63,11 @@ router.get("/assessments/recent", verifyToken, async (req, res) => {
     );
     res.json(result);
   } catch (error) {
+    console.error("/api/optimization/assessments/recent error", {
+      query: req.query,
+      message: error.message,
+      stack: error.stack,
+    });
     res.status(500).json({ error: error.message });
   }
 });

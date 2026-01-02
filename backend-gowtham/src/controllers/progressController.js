@@ -23,7 +23,7 @@ const checkMilestones = (percentage) => {
 
 // Update progress - ENHANCED with milestones & validation
 exports.updateProgress = async (req, res) => {
-  const { courseId, percentage, lessonId, timeSpent, completed } = req.body;
+  const { courseId, percentage, lessonId, timeSpent, completed, completedModuleIds } = req.body;
   const userId = req.user.uid;
 
   // Validation
@@ -66,6 +66,10 @@ exports.updateProgress = async (req, res) => {
         !previousMilestones.some((pm) => pm.percentage === m.percentage)
     );
 
+    const uniqueModuleIds = Array.isArray(completedModuleIds)
+      ? Array.from(new Set(completedModuleIds.map(String)))
+      : [];
+
     const progressData = {
       userId,
       courseId,
@@ -73,6 +77,7 @@ exports.updateProgress = async (req, res) => {
       lessonId: lessonId || null,
       timeSpent: (timeSpent || 0) + (previousPercentage !== 0 ? 0 : 0),
       completed: completed || percentage === 100,
+      completedModuleIds: uniqueModuleIds,
       milestonesAchieved: milestones,
       newMilestones: newMilestones.length > 0 ? newMilestones : [],
       lastUpdatedAt: new Date(),
@@ -90,6 +95,19 @@ exports.updateProgress = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+async function fetchProgressRecord(userId, courseId) {
+  const snapshot = await db
+    .collection("progress")
+    .where("userId", "==", userId)
+    .where("courseId", "==", courseId)
+    .limit(1)
+    .get();
+
+  if (snapshot.empty) return null;
+  const doc = snapshot.docs[0];
+  return { id: doc.id, ...doc.data() };
+}
 
 // Get progress of user - with filtering options
 exports.getProgress = async (req, res) => {
@@ -184,6 +202,33 @@ exports.getCourseProgressAnalytics = async (req, res) => {
         (progressBreakdown.completed / progressData.length) * 100
       ),
     });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Get progress for current user & course
+exports.getCurrentCourseProgress = async (req, res) => {
+  try {
+    const userId = req.user?.uid;
+    const { courseId } = req.params;
+    if (!userId || !courseId) return res.status(400).json({ error: "userId and courseId required" });
+
+    const progress = await fetchProgressRecord(userId, courseId);
+    res.json({ progress: progress || null });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Get progress for arbitrary user & course
+exports.getUserCourseProgress = async (req, res) => {
+  try {
+    const { userId, courseId } = req.params;
+    if (!userId || !courseId) return res.status(400).json({ error: "userId and courseId required" });
+
+    const progress = await fetchProgressRecord(userId, courseId);
+    res.json({ progress: progress || null });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

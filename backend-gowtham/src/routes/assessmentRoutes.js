@@ -9,7 +9,10 @@ const {
   getCourseAssessments,
   getUserSubmissions,
   getAssessmentAnalytics,
+  getAssessmentSubmissions,
+  reviewAssessmentSubmission,
 } = require("../controllers/assessmentController");
+const { downloadCertificate } = require('../controllers/certificateController');
 
 // Admin/trainer: Create assessment
 router.post(
@@ -24,6 +27,9 @@ router.post("/submit", verifyToken, submitAssessmentScore);
 
 // Student: Submit specific assessment
 router.post("/:assessmentId/submit", verifyToken, submitAssessmentScore);
+
+// Download certificate for a submission
+router.get('/certificate/:certificateId/download', verifyToken, downloadCertificate);
 
 // Get assessment by ID
 router.get("/:assessmentId", verifyToken, getAssessment);
@@ -69,6 +75,22 @@ router.get(
   verifyToken,
   roleMiddleware(["admin", "trainer"]),
   getAssessmentAnalytics
+);
+
+// Admin/trainer: Get submissions for an assessment
+router.get(
+  "/:assessmentId/submissions",
+  verifyToken,
+  roleMiddleware(["admin", "trainer"]),
+  getAssessmentSubmissions
+);
+
+// Trainer/Admin: review a submission
+router.post(
+  "/:assessmentId/submissions/:submissionId/review",
+  verifyToken,
+  roleMiddleware(["admin", "trainer"]),
+  reviewAssessmentSubmission
 );
 
 module.exports = router;

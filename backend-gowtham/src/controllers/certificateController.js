@@ -1,5 +1,196 @@
-const { db } = require("../config/firebase");
-const evaluationService = require("../services/evaluationService");
+const PDFDocument = require('pdfkit')
+const stream = require('stream')
+const { db, admin } = require('../config/firebase')
+const evaluationService = require('../services/evaluationService')
+
+async function bufferFromPDF(doc) {
+  return new Promise((resolve, reject) => {
+    const buffers = []
+    doc.on('data', (d) => buffers.push(d))
+    doc.on('end', () => resolve(Buffer.concat(buffers)))
+    doc.on('error', reject)
+    doc.end()
+  })
+}
+
+// Generate a simple certificate PDF and upload to Firebase Storage, then create cert record
+exports.generateCertificateForUser = async ({ userId, course }) => {
+  try {
+    // Minimal safety checks
+    if (!userId || !course || !course.id) throw new Error('Missing userId or course')
+
+    // Create certificate record first (to get an id)
+    const certRef = db.collection('certificates').doc()
+    const certId = certRef.id
+
+    const issuedDate = new Date()
+
+    // Create PDF doc
+    const doc = new PDFDocument({ size: 'A4', margin: 50 })
+    doc.fontSize(20).text('Certificate of Completion', { align: 'center' })
+    doc.moveDown(2)
+    doc.fontSize(14).text(`This certifies that`, { align: 'center' })
+    doc.moveDown(1)
+    doc.fontSize(18).text(`${userId}`, { align: 'center' })
+    doc.moveDown(1)
+    doc.fontSize(14).text(`has successfully completed the course`, { align: 'center' })
+    doc.moveDown(1)
+    doc.fontSize(16).text(`${course.title || course.name || course.id}`, { align: 'center' })
+    doc.moveDown(2)
+    doc.fontSize(12).text(`Issued: ${issuedDate.toISOString().split('T')[0]}`, { align: 'center' })
+
+    // turn into buffer
+    const pdfBuffer = await bufferFromPDF(doc)
+
+    // upload to storage
+    const dest = `certificates/${certId}.pdf`
+    const bucket = admin.storage().bucket()
+    const fileRef = bucket.file(dest)
+    await fileRef.save(pdfBuffer, { contentType: 'application/pdf' })
+    try { await fileRef.makePublic() } catch (e) { /* ignore */ }
+    const publicUrl = `https://storage.googleapis.com/${bucket.name}/${dest}`
+
+    // create cert record
+    const certData = {
+      userId,
+      courseId: course.id,
+      courseTitle: course.title || course.name || null,
+      issuedDate: issuedDate,
+      fileUrl: publicUrl,
+      status: 'issued',
+      createdAt: new Date(),
+    }
+
+    await certRef.set(certData)
+    return { id: certId, ...certData }
+  } catch (err) {
+    console.error('generateCertificateForUser failed', err)
+    throw err
+  }
+}
+
+// Endpoint to download certificate (proxy to storage) — ensure caller owns certificate or is trainer/admin
+exports.downloadCertificate = async (req, res) => {
+  try {
+    const { certificateId } = req.params
+    if (!certificateId) return res.status(400).json({ error: 'certificateId required' })
+
+    const doc = await db.collection('certificates').doc(certificateId).get()
+    if (!doc.exists) return res.status(404).json({ error: 'Certificate not found' })
+    const data = doc.data()
+
+    // authorization: allow user (owner) or trainer/admin (role checks are left to middleware)
+    if (req.user?.uid !== data.userId && !(req.user?.role && ['trainer', 'admin'].includes(req.user.role))) {
+      return res.status(403).json({ error: 'Forbidden' })
+    }
+
+    // Stream file from storage
+    const bucket = admin.storage().bucket()
+    const fileRef = bucket.file(`certificates/${certificateId}.pdf`)
+    const exists = await fileRef.exists()
+    if (!exists[0]) return res.status(404).json({ error: 'File not found' })
+
+    const readStream = fileRef.createReadStream()
+    res.setHeader('Content-Type', 'application/pdf')
+    res.setHeader('Content-Disposition', `attachment; filename="certificate-${certificateId}.pdf"`)
+    readStream.pipe(res)
+  } catch (err) {
+    console.error('downloadCertificate failed', err)
+    res.status(500).json({ error: err.message })
+  }
+}
+
+// Admin/manual generate certificate endpoint wrapper
+exports.generateCertificate = async (req, res) => {
+  try {
+    const { userId, courseId } = req.body
+    if (!userId || !courseId) return res.status(400).json({ error: 'userId and courseId required' })
+    const courseDoc = await db.collection('courses').doc(courseId).get()
+    const course = courseDoc.exists ? { id: courseDoc.id, ...courseDoc.data() } : { id: courseId }
+    const cert = await exports.generateCertificateForUser({ userId, course })
+    res.json(cert)
+  } catch (err) {
+    console.error('generateCertificate endpoint failed', err)
+    res.status(500).json({ error: err.message })
+  }
+}
+
+exports.getCertificate = async (req, res) => {
+  try {
+    const { certificateId } = req.params
+    if (!certificateId) return res.status(400).json({ error: 'certificateId required' })
+    const doc = await db.collection('certificates').doc(certificateId).get()
+    if (!doc.exists) return res.status(404).json({ error: 'Certificate not found' })
+    res.json({ id: doc.id, ...doc.data() })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+}
+
+exports.getUserCertificates = async (req, res) => {
+  try {
+    const userId = req.params.userId || req.user?.uid
+    if (!userId) return res.status(400).json({ error: 'userId required' })
+    const snap = await db.collection('certificates').where('userId', '==', userId).get()
+    const certs = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+    res.json({ userId, certificates: certs })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+}
+
+exports.getCourseCertificates = async (req, res) => {
+  try {
+    const courseId = req.params.courseId
+    if (!courseId) return res.status(400).json({ error: 'courseId required' })
+    const snap = await db.collection('certificates').where('courseId', '==', courseId).get()
+    const certs = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+    res.json({ courseId, certificates: certs })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+}
+
+exports.verifyCertificate = async (req, res) => {
+  try {
+    const { certificateId } = req.body
+    if (!certificateId) return res.status(400).json({ error: 'certificateId required' })
+    const doc = await db.collection('certificates').doc(certificateId).get()
+    if (!doc.exists) return res.json({ valid: false })
+    res.json({ valid: true, certificate: { id: doc.id, ...doc.data() } })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+}
+
+exports.revokeCertificate = async (req, res) => {
+  try {
+    const { certificateId } = req.params
+    if (!certificateId) return res.status(400).json({ error: 'certificateId required' })
+    await db.collection('certificates').doc(certificateId).update({ status: 'revoked', revokedAt: new Date() })
+    res.json({ success: true })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+}
+
+exports.getCertificateStatistics = async (req, res) => {
+  try {
+    const snap = await db.collection('certificates').get()
+    res.json({ totalCertificates: snap.size })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+}
+
+exports.bulkCheckEligibility = async (req, res) => {
+  try {
+    // placeholder: return OK
+    res.json({ success: true })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+}
 
 // Check eligibility for certificate
 exports.checkCertificateEligibility = async (userId, courseId) => {

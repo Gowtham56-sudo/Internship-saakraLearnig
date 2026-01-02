@@ -1,0 +1,2 @@
+-- Seed data removed: default/sample users, courses, modules, enrollments and sessions
+-- If you need to seed a development DB, recreate entries intentionally or restore from a backup.

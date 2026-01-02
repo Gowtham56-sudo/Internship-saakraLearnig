@@ -10,7 +10,10 @@ const assessmentRoutes = require("./src/routes/assessmentRoutes");
 const certificateRoutes = require("./src/routes/certificateRoutes");
 const analyticsRoutes = require("./src/routes/analyticsRoutes");
 const queryOptimizationRoutes = require("./src/routes/queryOptimizationRoutes");
+const sessionRoutes = require("./src/routes/sessionRoutes");
 const userRoutes = require("./src/routes/userRoutes");
+const debugRoutes = require("./src/routes/debugRoutes");
+const publicRoutes = require("./src/routes/publicRoutes");
 
 const app = express();
 
@@ -27,6 +30,9 @@ app.use("/api/assessments", assessmentRoutes);
 app.use("/api/certificates", certificateRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/optimization", queryOptimizationRoutes);
+app.use("/api/sessions", sessionRoutes);
+app.use("/api/debug", debugRoutes);
+app.use("/api/public", publicRoutes);
 
 // Health check endpoint
 app.get("/", (req, res) => {

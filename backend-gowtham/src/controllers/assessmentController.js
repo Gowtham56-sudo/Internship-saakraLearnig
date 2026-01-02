@@ -38,30 +38,56 @@ exports.createAssessment = async (req, res) => {
   }
 };
 
-// Submit assessment score
+// Submit assessment score or assignment/project submission
 exports.submitAssessmentScore = async (req, res) => {
-  const { assessmentId, score, totalScore, answers, timeTaken } = req.body;
+  const { assessmentId, score, totalScore, answers, timeTaken, submissionText, submissionUrl } = req.body;
   const userId = req.user.uid;
 
-  // Validation
-  if (!assessmentId || score === undefined || !totalScore) {
-    return res
-      .status(400)
-      .json({ error: "assessmentId, score, and totalScore are required" });
+  if (!assessmentId) {
+    return res.status(400).json({ error: "assessmentId is required" });
   }
 
   try {
-    // Get assessment details
-    const assessmentDoc = await db
-      .collection("assessments")
-      .doc(assessmentId)
-      .get();
+    const assessmentDoc = await db.collection("assessments").doc(assessmentId).get();
 
     if (!assessmentDoc.exists) {
       return res.status(404).json({ error: "Assessment not found" });
     }
 
     const assessmentData = assessmentDoc.data();
+    const isAssignmentLike = ["assignment", "project"].includes(assessmentData.type);
+
+    // Branch: assignment/project submission (no score required)
+    if (isAssignmentLike) {
+      if (!submissionText && !submissionUrl) {
+        return res.status(400).json({ error: "submissionText or submissionUrl is required for this assessment" });
+      }
+
+      const submissionData = {
+        userId,
+        assessmentId,
+        courseId: assessmentData.courseId,
+        type: assessmentData.type,
+        submissionText: submissionText || null,
+        submissionUrl: submissionUrl || null,
+        status: "submitted",
+        submittedAt: new Date(),
+      };
+
+      const docRef = await db.collection("assessment_submissions").add(submissionData);
+
+      return res.status(201).json({
+        message: "Assignment submitted successfully",
+        submissionId: docRef.id,
+        submission: { id: docRef.id, ...submissionData },
+      });
+    }
+
+    // Branch: quiz/test with scoring
+    if (score === undefined || !totalScore) {
+      return res.status(400).json({ error: "score and totalScore are required for this assessment" });
+    }
+
     const percentage = Math.round((score / totalScore) * 100);
     const passed = percentage >= assessmentData.passingScore;
 
@@ -78,9 +104,35 @@ exports.submitAssessmentScore = async (req, res) => {
       submittedAt: new Date(),
     };
 
-    const docRef = await db
-      .collection("assessment_submissions")
-      .add(submissionData);
+    const docRef = await db.collection("assessment_submissions").add(submissionData);
+
+    try {
+      if (passed) {
+        const progSnap = await db
+          .collection('progress')
+          .where('userId', '==', userId)
+          .where('courseId', '==', assessmentData.courseId)
+          .limit(1)
+          .get();
+
+        const prog = progSnap.empty ? null : progSnap.docs[0].data();
+        const completedPct = prog ? Number(prog.completedPercentage || 0) : 0;
+
+        if (completedPct >= 100) {
+          const { generateCertificateForUser } = require('./certificateController');
+          const courseDoc = await db.collection('courses').doc(assessmentData.courseId).get();
+          const course = courseDoc.exists ? { id: courseDoc.id, ...courseDoc.data() } : { id: assessmentData.courseId };
+          try {
+            const cert = await generateCertificateForUser({ userId, course });
+            await db.collection('assessment_submissions').doc(docRef.id).update({ certificateId: cert.id });
+          } catch (certErr) {
+            console.error('Failed to generate certificate', certErr);
+          }
+        }
+      }
+    } catch (issueErr) {
+      console.error('Post-submission certificate check failed', issueErr);
+    }
 
     res.status(201).json({
       message: "Assessment submitted successfully",
@@ -250,6 +302,60 @@ exports.getAssessmentAnalytics = async (req, res) => {
         ].percentage
       ),
     });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Get all submissions for an assessment (trainer/admin)
+exports.getAssessmentSubmissions = async (req, res) => {
+  const { assessmentId } = req.params;
+
+  try {
+    const snapshot = await db
+      .collection("assessment_submissions")
+      .where("assessmentId", "==", assessmentId)
+      .orderBy("submittedAt", "desc")
+      .get();
+
+    const submissions = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+
+    res.json({ assessmentId, total: submissions.length, submissions });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Review/grade an assessment submission (trainer/admin)
+exports.reviewAssessmentSubmission = async (req, res) => {
+  const { assessmentId, submissionId } = req.params;
+  const { status, feedback, score, passed } = req.body;
+
+  if (!submissionId) {
+    return res.status(400).json({ error: "submissionId is required" });
+  }
+
+  const update = {};
+  if (status) update.status = status;
+  if (feedback != null) update.feedback = feedback;
+  if (score != null) update.score = score;
+  if (typeof passed === "boolean") update.passed = passed;
+  update.reviewedAt = new Date();
+  update.reviewerId = req.user?.uid || null;
+
+  try {
+    const ref = db.collection("assessment_submissions").doc(submissionId);
+    const doc = await ref.get();
+    if (!doc.exists) {
+      return res.status(404).json({ error: "Submission not found" });
+    }
+    if (assessmentId && doc.data().assessmentId !== assessmentId) {
+      return res.status(400).json({ error: "Submission does not belong to this assessment" });
+    }
+
+    await ref.update(update);
+    const fresh = await ref.get();
+    return res.json({ message: "Submission updated", submission: { id: ref.id, ...fresh.data() } });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

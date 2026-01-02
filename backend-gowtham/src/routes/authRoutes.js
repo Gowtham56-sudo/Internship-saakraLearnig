@@ -7,6 +7,8 @@ const {
   updateRole,
   createTrainer,
   createAdmin,
+  // add updateProfile export
+  updateProfile,
 } = require("../controllers/authcontroller");
 
 const verifyToken = require("../middlewares/authmiddleware");
@@ -14,6 +16,11 @@ const checkRole = require("../middlewares/rolemiddleware");
 
 router.post("/register", register);
 router.post("/login", login);
+const { me } = require("../controllers/authcontroller");
+router.get("/me", verifyToken, me);
+
+// Update current user's profile
+router.put("/profile", verifyToken, updateProfile);
 
 // Admin creates trainer accounts (email/password)
 router.post(

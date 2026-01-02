@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const { db } = require("../config/firebase");
 const verifyToken = require("../middlewares/authmiddleware");
 const roleMiddleware = require("../middlewares/rolemiddleware");
 const {
@@ -55,24 +56,29 @@ router.get(
   }
 );
 
-// Get certificate by ID (public - no auth required for verification)
-router.get("/:certificateId", getCertificate);
-
-// Get user's certificates
-router.get("/user/:userId", verifyToken, getUserCertificates);
-
+// IMPORTANT: Specific routes must come BEFORE dynamic routes
 // Get current user's certificates
 router.get("/user", verifyToken, async (req, res) => {
   try {
     const userId = req.user?.uid;
-    const certs = await getUserCertificates({ user: { uid: userId } }, res);
-    if (!res.headersSent) {
-      res.json({ userId, certificates: [] });
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
     }
+    // Fetch certificates for current user
+    const snap = await db.collection('certificates').where('userId', '==', userId).get();
+    const certs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    res.json({ userId, certificates: certs });
   } catch (error) {
+    console.error('Error fetching user certificates:', error);
     res.status(500).json({ error: error.message });
   }
 });
+
+// Get user's certificates by userId
+router.get("/user/:userId", verifyToken, getUserCertificates);
+
+// Get certificate by ID (public - no auth required for verification)
+router.get("/:certificateId", getCertificate);
 
 // Get certificates for a course
 router.get(
